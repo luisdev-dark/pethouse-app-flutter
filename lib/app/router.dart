@@ -44,7 +44,22 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/journal/:id',
       builder: (BuildContext context, GoRouterState state) {
-        return JournalDetailPage(entryId: state.pathParameters['id'] ?? '');
+        final idParam = state.pathParameters['id'];
+        final id = int.tryParse(idParam ?? '');
+        return JournalDetailPage(entryId: id);
+      },
+    ),
+    GoRoute(
+      path: '/journal/:id/edit',
+      builder: (BuildContext context, GoRouterState state) {
+        final idParam = state.pathParameters['id'];
+        final id = int.tryParse(idParam ?? '');
+        if (id == null) {
+          return const Scaffold(
+            body: Center(child: Text('Entrada no encontrada')),
+          );
+        }
+        return JournalEditPage(entryId: id);
       },
     ),
     GoRoute(

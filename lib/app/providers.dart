@@ -141,6 +141,11 @@ final journalFeedProvider =
       });
     });
 
+final journalEntryProvider =
+    StreamProvider.family<JournalEntry?, int>((ref, id) {
+  return ref.watch(journalRepoProvider).watchById(id);
+});
+
 final healthSummaryProvider = StreamProvider.family<HealthSummary, int?>((
   ref,
   petId,

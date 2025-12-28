@@ -13,4 +13,20 @@ class MediaRepository {
       return query.find();
     });
   }
+
+  void attachToEntry(int entryId, List<MediaItem> items) {
+    for (final item in items) {
+      item.entry.targetId = entryId;
+      _box.put(item);
+    }
+  }
+
+  void deleteForEntry(int entryId) {
+    final items = _box.getAll();
+    for (final item in items) {
+      if (item.entry.targetId == entryId) {
+        _box.remove(item.id);
+      }
+    }
+  }
 }
