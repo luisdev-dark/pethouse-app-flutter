@@ -9,6 +9,7 @@ import 'package:pethouse/features/health/domain/weight_record.dart';
 import 'package:pethouse/features/journal/data/journal_repo.dart';
 import 'package:pethouse/features/journal/data/media_repo.dart';
 import 'package:pethouse/features/journal/domain/journal_entry.dart';
+import 'package:pethouse/features/journal/domain/media_item.dart';
 import 'package:pethouse/features/pets/data/pet_repo.dart';
 import 'package:pethouse/features/pets/domain/pet.dart';
 import 'package:pethouse/features/reminders/data/reminder_repo.dart';
@@ -212,6 +213,10 @@ final remindersProvider = StreamProvider.family<List<Reminder>, int?>((
     filtered.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
     return filtered;
   });
+});
+
+final mediaListProvider = StreamProvider<List<MediaItem>>((ref) {
+  return ref.watch(mediaRepoProvider).watchAll();
 });
 
 class JournalFeedFilters {

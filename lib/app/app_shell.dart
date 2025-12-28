@@ -61,7 +61,7 @@ class _AppShellState extends State<AppShell> {
           context.go('/journal/new');
         },
         icon: const Icon(Icons.add),
-        label: const Text('Quick Add'),
+        label: const Text('Nueva entrada'),
       ),
     );
   }
