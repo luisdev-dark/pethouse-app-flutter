@@ -27,4 +27,8 @@ class HealthRepository {
   int addWeightRecord(WeightRecord record) {
     return _weightBox.put(record);
   }
+
+  int addVaccine(HealthEvent event) {
+    return _eventBox.put(event);
+  }
 }

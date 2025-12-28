@@ -13,4 +13,8 @@ class ReminderRepository {
       return query.find();
     });
   }
+
+  int schedule(Reminder reminder) {
+    return _box.put(reminder);
+  }
 }

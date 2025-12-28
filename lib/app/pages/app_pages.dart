@@ -1,15 +1,18 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pethouse/app/providers.dart';
+import 'package:pethouse/features/health/domain/health_event.dart';
 import 'package:pethouse/features/health/domain/weight_record.dart';
 import 'package:pethouse/features/journal/domain/journal_entry.dart';
 import 'package:pethouse/features/journal/domain/media_item.dart';
 import 'package:pethouse/features/pets/domain/pet.dart';
+import 'package:pethouse/features/reminders/domain/reminder.dart';
 import 'package:pethouse/shared/services/notification_service.dart';
 import 'package:pethouse/shared/services/permission_service.dart';
 import 'package:pethouse/shared/utils/enums.dart';
@@ -560,12 +563,495 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
   }
 }
 
-class HealthTabPage extends StatelessWidget {
+class HealthTabPage extends ConsumerStatefulWidget {
   const HealthTabPage({super.key});
 
   @override
+  ConsumerState<HealthTabPage> createState() => _HealthTabPageState();
+}
+
+class _HealthTabPageState extends ConsumerState<HealthTabPage> {
+  @override
   Widget build(BuildContext context) {
-    return const _SimpleScaffold(title: 'Salud', body: 'Eventos de salud');
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+
+    if (selectedPetId == null) {
+      return const _SimpleScaffold(
+        title: 'Salud',
+        body: 'Selecciona una mascota en Inicio para ver su salud.',
+      );
+    }
+
+    final healthSummaryAsync = ref.watch(healthSummaryProvider(selectedPetId));
+    final remindersAsync = ref.watch(remindersProvider(selectedPetId));
+
+    return DefaultTabController(
+      length: 4,
+      child: Builder(
+        builder: (context) {
+          final TabController? tabController =
+              DefaultTabController.of(context);
+
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Salud'),
+            ),
+            body: Column(
+              children: [
+                _HealthAlertCard(
+                  healthSummaryAsync: healthSummaryAsync,
+                  remindersAsync: remindersAsync,
+                ),
+                Material(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: const TabBar(
+                    tabs: [
+                      Tab(text: 'Vacunas'),
+                      Tab(text: 'Meds'),
+                      Tab(text: 'Historial'),
+                      Tab(text: 'Peso'),
+                    ],
+                  ),
+                ),
+                const Expanded(
+                  child: TabBarView(
+                    children: [
+                      _VaccinesTab(),
+                      _MedsTab(),
+                      _HistoryTab(),
+                      _WeightTab(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            floatingActionButton: tabController == null
+                ? null
+                : AnimatedBuilder(
+                    animation: tabController,
+                    builder: (context, _) {
+                      if (tabController.index != 0) {
+                        return const SizedBox.shrink();
+                      }
+                      return FloatingActionButton.extended(
+                        onPressed: () {
+                          context.go('/health/vaccine/new');
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Registrar vacuna'),
+                      );
+                    },
+                  ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HealthAlertCard extends StatelessWidget {
+  const _HealthAlertCard({
+    required this.healthSummaryAsync,
+    required this.remindersAsync,
+  });
+
+  final AsyncValue<HealthSummary> healthSummaryAsync;
+  final AsyncValue<List<Reminder>> remindersAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    return healthSummaryAsync.when(
+      data: (summary) {
+        if (summary.upcomingVaccines.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final now = DateTime.now();
+        final todayStart = DateTime(now.year, now.month, now.day);
+        final next = summary.upcomingVaccines.firstWhere(
+          (event) => event.eventAt.isAfter(todayStart),
+          orElse: () => summary.upcomingVaccines.first,
+        );
+
+        final diffDays = next.eventAt.difference(todayStart).inDays;
+
+        if (diffDays < 0 || diffDays > 30) {
+          return const SizedBox.shrink();
+        }
+
+        final label = diffDays == 0
+            ? 'vence hoy'
+            : 'vence en $diffDays días';
+
+        final hasReminder = remindersAsync.maybeWhen(
+          data: (reminders) {
+            for (final reminder in reminders) {
+              if (reminder.relatedEventId == next.id &&
+                  reminder.isEnabled) {
+                return true;
+              }
+            }
+            return false;
+          },
+          orElse: () => false,
+        );
+
+        final reminderLabel =
+            hasReminder ? ' (recordatorio activo)' : '';
+
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Card(
+            color: Theme.of(context)
+                .colorScheme
+                .errorContainer
+                .withOpacity(0.1),
+            child: ListTile(
+              leading: Icon(
+                Icons.vaccines,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: const Text('Alerta de vacuna'),
+              subtitle: Text(
+                '${next.title} $label$reminderLabel',
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16),
+        child: LinearProgressIndicator(),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _VaccinesTab extends ConsumerWidget {
+  const _VaccinesTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+    if (selectedPetId == null) {
+      return const Center(
+        child: Text('Selecciona una mascota para ver sus vacunas.'),
+      );
+    }
+
+    final summaryAsync = ref.watch(healthSummaryProvider(selectedPetId));
+
+    return summaryAsync.when(
+      data: (summary) {
+        final vaccines = summary.upcomingVaccines;
+
+        if (vaccines.isEmpty) {
+          return const Center(
+            child: _EmptyCard(
+              title: 'Sin vacunas registradas',
+              subtitle: 'Registra la primera vacuna de tu mascota.',
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemBuilder: (context, index) {
+            final event = vaccines[index];
+            final appliedAt = event.eventAt;
+            final appliedLabel =
+                '${appliedAt.day.toString().padLeft(2, '0')}/${appliedAt.month.toString().padLeft(2, '0')}/${appliedAt.year}';
+
+            String nextLabel = 'Sin próxima fecha';
+            String statusLabel = 'OK';
+            IconData statusIcon = Icons.check_circle;
+            Color? statusColor =
+                Theme.of(context).colorScheme.primary;
+
+            if (event.nextAt != null) {
+              final nextAt = event.nextAt!;
+              nextLabel =
+                  '${nextAt.day.toString().padLeft(2, '0')}/${nextAt.month.toString().padLeft(2, '0')}/${nextAt.year}';
+
+              final now = DateTime.now();
+              final todayStart = DateTime(now.year, now.month, now.day);
+              final diffDays =
+                  nextAt.difference(todayStart).inDays;
+
+              if (diffDays <= 7) {
+                statusLabel = 'Por vencer';
+                statusIcon = Icons.warning_amber_rounded;
+                statusColor = Colors.orange;
+              }
+            }
+
+            return Card(
+              child: ListTile(
+                leading: const Icon(Icons.vaccines),
+                title: Text(event.title),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Aplicada: $appliedLabel'),
+                    Text('Próxima: $nextLabel'),
+                  ],
+                ),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      statusIcon,
+                      color: statusColor,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      statusLabel,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text(event.title),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text('Aplicada: $appliedLabel'),
+                            Text('Próxima: $nextLabel'),
+                            if (event.notes != null &&
+                                event.notes!.isNotEmpty)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(top: 8),
+                                child: Text(event.notes!),
+                              ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).pop(),
+                            child: const Text('Cerrar'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            );
+          },
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemCount: vaccines.length,
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      error: (_, __) => const Center(
+        child: Text('No se pudo cargar las vacunas.'),
+      ),
+    );
+  }
+}
+
+class _MedsTab extends ConsumerWidget {
+  const _MedsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+    if (selectedPetId == null) {
+      return const Center(
+        child: Text('Selecciona una mascota para ver sus medicaciones.'),
+      );
+    }
+
+    final summaryAsync = ref.watch(healthSummaryProvider(selectedPetId));
+
+    return summaryAsync.when(
+      data: (summary) {
+        final meds = summary.medications;
+
+        if (meds.isEmpty) {
+          return const Center(
+            child: _EmptyCard(
+              title: 'Sin medicaciones',
+              subtitle:
+                  'Registra medicaciones desde los eventos de salud.',
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemBuilder: (context, index) {
+            final event = meds[index];
+            final date = event.eventAt;
+            final dateLabel =
+                '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+            return Card(
+              child: ListTile(
+                leading: const Icon(Icons.medication),
+                title: Text(event.title),
+                subtitle: Text('Fecha: $dateLabel'),
+              ),
+            );
+          },
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemCount: meds.length,
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      error: (_, __) => const Center(
+        child: Text('No se pudo cargar las medicaciones.'),
+      ),
+    );
+  }
+}
+
+class _HistoryTab extends ConsumerWidget {
+  const _HistoryTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+    if (selectedPetId == null) {
+      return const Center(
+        child: Text('Selecciona una mascota para ver su historial.'),
+      );
+    }
+
+    final summaryAsync = ref.watch(healthSummaryProvider(selectedPetId));
+
+    return summaryAsync.when(
+      data: (summary) {
+        final events = <HealthEvent>[
+          ...summary.upcomingVaccines,
+          ...summary.medications,
+          ...summary.visits,
+          ...summary.symptoms,
+        ];
+
+        if (events.isEmpty) {
+          return const Center(
+            child: _EmptyCard(
+              title: 'Sin historial',
+              subtitle: 'Registra eventos de salud para tu mascota.',
+            ),
+          );
+        }
+
+        events.sort((a, b) => b.eventAt.compareTo(a.eventAt));
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemBuilder: (context, index) {
+            final event = events[index];
+            final date = event.eventAt;
+            final dateLabel =
+                '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+            IconData icon;
+            switch (event.type) {
+              case HealthEventType.vaccine:
+                icon = Icons.vaccines;
+                break;
+              case HealthEventType.medication:
+                icon = Icons.medication;
+                break;
+              case HealthEventType.visit:
+                icon = Icons.local_hospital;
+                break;
+              case HealthEventType.symptom:
+                icon = Icons.sick;
+                break;
+            }
+
+            return Card(
+              child: ListTile(
+                leading: Icon(icon),
+                title: Text(event.title),
+                subtitle: Text(dateLabel),
+              ),
+            );
+          },
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemCount: events.length,
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      error: (_, __) => const Center(
+        child: Text('No se pudo cargar el historial.'),
+      ),
+    );
+  }
+}
+
+class _WeightTab extends ConsumerWidget {
+  const _WeightTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+    if (selectedPetId == null) {
+      return const Center(
+        child: Text('Selecciona una mascota para ver su peso.'),
+      );
+    }
+
+    final weightsAsync = ref.watch(weightListProvider(selectedPetId));
+
+    return weightsAsync.when(
+      data: (weights) {
+        if (weights.isEmpty) {
+          return const Center(
+            child: _EmptyCard(
+              title: 'Sin registros de peso',
+              subtitle: 'Registra un peso desde el inicio.',
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemBuilder: (context, index) {
+            final record = weights[index];
+            final date = record.recordedAt;
+            final dateLabel =
+                '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+            return Card(
+              child: ListTile(
+                leading: const Icon(Icons.monitor_weight),
+                title:
+                    Text('${record.weight.toStringAsFixed(1)} kg'),
+                subtitle: Text(dateLabel),
+              ),
+            );
+          },
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemCount: weights.length,
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      error: (_, __) => const Center(
+        child: Text('No se pudo cargar el peso.'),
+      ),
+    );
   }
 }
 
@@ -1530,15 +2016,336 @@ Future<void> _confirmDelete(
   context.go('/');
 }
 
-class HealthVaccineNewPage extends StatelessWidget {
+class HealthVaccineNewPage extends ConsumerStatefulWidget {
   const HealthVaccineNewPage({super.key});
 
   @override
+  ConsumerState<HealthVaccineNewPage> createState() =>
+      _HealthVaccineNewPageState();
+}
+
+class _HealthVaccineNewPageState
+    extends ConsumerState<HealthVaccineNewPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _customNameController =
+      TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+
+  DateTime _appliedAt = DateTime.now();
+  DateTime? _nextAt;
+  bool _createReminder = true;
+  String? _selectedVaccineName;
+  String? _attachmentPath;
+  bool _saving = false;
+
+  static const List<String> _vaccineOptions = <String>[
+    'Rabia',
+    'Moquillo',
+    'Parvovirus',
+    'Combinada',
+    'Personalizada',
+  ];
+
+  @override
+  void dispose() {
+    _customNameController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const _SimpleScaffold(
-      title: 'Nueva vacuna',
-      body: 'Registrar vacuna',
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+    if (selectedPetId == null) {
+      return const _SimpleScaffold(
+        title: 'Nueva vacuna',
+        body:
+            'Selecciona una mascota en Inicio antes de registrar una vacuna.',
+      );
+    }
+
+    final vaccineName = _buildVaccineName();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Registrar vacuna'),
+      ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.all(16),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _saving ? null : () => _save(selectedPetId),
+            child: Text(_saving ? 'Guardando...' : 'Guardar'),
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              DropdownButtonFormField<String>(
+                value: _selectedVaccineName,
+                decoration: const InputDecoration(
+                  labelText: 'Vacuna',
+                ),
+                items: _vaccineOptions
+                    .map(
+                      (name) => DropdownMenuItem<String>(
+                        value: name,
+                        child: Text(name),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedVaccineName = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null && _customNameController.text.isEmpty) {
+                    return 'Selecciona una vacuna o escribe un nombre.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _customNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre personalizado (opcional)',
+                  hintText: 'Ej. Refuerzo anual',
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Fecha aplicada'),
+                subtitle: Text(
+                  '${_appliedAt.day.toString().padLeft(2, '0')}/${_appliedAt.month.toString().padLeft(2, '0')}/${_appliedAt.year}',
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _pickAppliedDate(context),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Próxima fecha (opcional)'),
+                subtitle: Text(
+                  _nextAt == null
+                      ? 'Sin próxima fecha'
+                      : '${_nextAt!.day.toString().padLeft(2, '0')}/${_nextAt!.month.toString().padLeft(2, '0')}/${_nextAt!.year}',
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_nextAt != null)
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _nextAt = null;
+                          });
+                        },
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.calendar_today),
+                      onPressed: () => _pickNextDate(context),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _notesController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Notas',
+                  hintText: 'Detalles adicionales de la aplicación',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Adjuntar foto/PDF (opcional)',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _pickAttachment,
+                    icon: const Icon(Icons.attach_file),
+                    label: const Text('Adjuntar'),
+                  ),
+                ],
+              ),
+              if (_attachmentPath != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Adjunto: ${_attachmentPath!.split(Platform.pathSeparator).last}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(height: 16),
+              SwitchListTile(
+                value: _createReminder,
+                onChanged: (value) {
+                  setState(() {
+                    _createReminder = value;
+                  });
+                },
+                title: const Text('Crear recordatorio'),
+                subtitle: const Text(
+                  'Recibirás una notificación para la próxima dosis.',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  String? _buildVaccineName() {
+    if (_customNameController.text.trim().isNotEmpty) {
+      return _customNameController.text.trim();
+    }
+    return _selectedVaccineName;
+  }
+
+  Future<void> _pickAppliedDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime(DateTime.now().year - 10),
+      lastDate: DateTime.now(),
+      initialDate: _appliedAt,
+    );
+    if (picked == null) {
+      return;
+    }
+    setState(() {
+      _appliedAt = picked;
+    });
+  }
+
+  Future<void> _pickNextDate(BuildContext context) async {
+    final initial = _nextAt ?? _appliedAt.add(const Duration(days: 365));
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: _appliedAt,
+      lastDate: DateTime(DateTime.now().year + 10),
+      initialDate: initial,
+    );
+    if (picked == null) {
+      return;
+    }
+    setState(() {
+      _nextAt = picked;
+    });
+  }
+
+  Future<void> _pickAttachment() async {
+    final result = await FilePicker.platform.pickFiles(
+      withData: false,
+      allowMultiple: false,
+      type: FileType.custom,
+      allowedExtensions: <String>['jpg', 'jpeg', 'png', 'pdf'],
+    );
+
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final path = result.files.single.path;
+    if (path == null) {
+      return;
+    }
+
+    setState(() {
+      _attachmentPath = path;
+    });
+  }
+
+  Future<void> _save(int selectedPetId) async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final vaccineName = _buildVaccineName();
+    if (vaccineName == null || vaccineName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa el nombre de la vacuna.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+    });
+
+    try {
+      final healthRepo = ref.read(healthRepoProvider);
+      final reminderRepo = ref.read(reminderRepoProvider);
+
+      final event = HealthEvent(
+        typeValue: HealthEventType.vaccine.index,
+        title: vaccineName,
+        notes: _buildNotesWithAttachment(),
+        eventAt: _appliedAt,
+        nextAt: _nextAt,
+      );
+      event.pet.targetId = selectedPetId;
+
+      final eventId = healthRepo.addVaccine(event);
+
+      if (_createReminder && _nextAt != null) {
+        final reminder = Reminder(
+          typeValue: HealthEventType.vaccine.index,
+          title: 'Vacuna: $vaccineName',
+          scheduledAt: _nextAt,
+          relatedEventId: eventId,
+        );
+        reminder.pet.targetId = selectedPetId;
+        final reminderId = reminderRepo.schedule(reminder);
+
+        final notificationService = NotificationService();
+        await notificationService.initialize();
+        await notificationService.scheduleReminder(
+          id: reminderId,
+          title: 'Próxima vacuna',
+          body: 'Le toca $vaccineName',
+          scheduledAt: _nextAt!,
+        );
+      }
+
+      if (!mounted) {
+        return;
+      }
+      context.go('/');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
+  }
+
+  String? _buildNotesWithAttachment() {
+    final base = _notesController.text.trim();
+    if (_attachmentPath == null) {
+      return base.isEmpty ? null : base;
+    }
+    final fileName =
+        _attachmentPath!.split(Platform.pathSeparator).last;
+    final attachmentNote = 'Adjunto: $fileName ($_attachmentPath)';
+    if (base.isEmpty) {
+      return attachmentNote;
+    }
+    return '$base\n$attachmentNote';
   }
 }
 
