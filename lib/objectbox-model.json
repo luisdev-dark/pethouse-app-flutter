@@ -1,0 +1,282 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:7149612474107203587",
+      "lastPropertyId": "7:1223480558354048311",
+      "name": "HealthEvent",
+      "properties": [
+        {
+          "id": "1:1189483817150987838",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3762683671183320166",
+          "name": "petId",
+          "indexId": "1:2105403124516911973",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Pet"
+        },
+        {
+          "id": "3:8601280197126941343",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "4:2872764105780604392",
+          "name": "notes",
+          "type": 9
+        },
+        {
+          "id": "5:1279093268846239201",
+          "name": "eventAt",
+          "type": 10
+        },
+        {
+          "id": "6:2274427786673579380",
+          "name": "nextAt",
+          "type": 10
+        },
+        {
+          "id": "7:1223480558354048311",
+          "name": "typeValue",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:6839449204823800348",
+      "lastPropertyId": "7:433070239170055169",
+      "name": "JournalEntry",
+      "properties": [
+        {
+          "id": "1:602162287806208266",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1921811077989809785",
+          "name": "petId",
+          "indexId": "2:8401091193762552123",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Pet"
+        },
+        {
+          "id": "3:641446887186504986",
+          "name": "text",
+          "type": 9
+        },
+        {
+          "id": "4:4059767839113985991",
+          "name": "mood",
+          "type": 9
+        },
+        {
+          "id": "5:70941230653440367",
+          "name": "tags",
+          "type": 30
+        },
+        {
+          "id": "6:4415166465987928765",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "7:433070239170055169",
+          "name": "entryAt",
+          "type": 10
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:1211371668084566910",
+      "lastPropertyId": "5:43815013671811982",
+      "name": "MediaItem",
+      "properties": [
+        {
+          "id": "1:2479829178354947866",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7740305284256258502",
+          "name": "entryId",
+          "indexId": "3:4888852344970640727",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "JournalEntry"
+        },
+        {
+          "id": "3:8692734692991623869",
+          "name": "path",
+          "type": 9
+        },
+        {
+          "id": "4:3186318354172080978",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "5:43815013671811982",
+          "name": "typeValue",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:3783277932914995685",
+      "lastPropertyId": "8:438959370123947486",
+      "name": "Pet",
+      "properties": [
+        {
+          "id": "1:5173272140031998367",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1452771560361489801",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:4257605897201166995",
+          "name": "species",
+          "type": 9
+        },
+        {
+          "id": "4:5868722497239028996",
+          "name": "breed",
+          "type": 9
+        },
+        {
+          "id": "5:6074588296232660867",
+          "name": "birthDate",
+          "type": 10
+        },
+        {
+          "id": "6:4721349552183633825",
+          "name": "photoPath",
+          "type": 9
+        },
+        {
+          "id": "7:3999384723495582208",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "8:438959370123947486",
+          "name": "sexValue",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "5:7912505800039096629",
+      "lastPropertyId": "8:417858815798101858",
+      "name": "Reminder",
+      "properties": [
+        {
+          "id": "1:922175126336626385",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:9092261702951908787",
+          "name": "petId",
+          "indexId": "4:6171320217010874837",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Pet"
+        },
+        {
+          "id": "3:3701712679219478305",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "4:2084060280203340486",
+          "name": "scheduledAt",
+          "type": 10
+        },
+        {
+          "id": "5:7464326231828129942",
+          "name": "repeatRule",
+          "type": 9
+        },
+        {
+          "id": "6:4374020551036728158",
+          "name": "isEnabled",
+          "type": 1
+        },
+        {
+          "id": "7:1429966927901895831",
+          "name": "relatedEventId",
+          "type": 6
+        },
+        {
+          "id": "8:417858815798101858",
+          "name": "typeValue",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "6:7556152409372253130",
+      "lastPropertyId": "4:3653625695122590826",
+      "name": "WeightRecord",
+      "properties": [
+        {
+          "id": "1:8454074806944496858",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3511507783066037334",
+          "name": "petId",
+          "indexId": "5:133486031347927233",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Pet"
+        },
+        {
+          "id": "3:2337470381093989052",
+          "name": "weight",
+          "type": 8
+        },
+        {
+          "id": "4:3653625695122590826",
+          "name": "recordedAt",
+          "type": 10
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "6:7556152409372253130",
+  "lastIndexId": "5:133486031347927233",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}
