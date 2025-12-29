@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pethouse/app/pages/app_pages.dart';
+import 'package:pethouse/features/health/ui/health_tab_page.dart';
+import 'package:pethouse/features/home/ui/home_tab_page.dart';
+import 'package:pethouse/features/journal/ui/journal_tab_page.dart';
+import 'package:pethouse/features/pets/ui/profile_tab_page.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});

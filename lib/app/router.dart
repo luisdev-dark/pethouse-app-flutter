@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:pethouse/app/app_shell.dart';
-import 'package:pethouse/app/pages/app_pages.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pethouse/features/health/ui/health_medication_new_page.dart';
+import 'package:pethouse/features/health/ui/health_vaccine_new_page.dart';
+import 'package:pethouse/features/health/ui/weight_new_page.dart';
+import 'package:pethouse/features/journal/ui/journal_detail_page.dart';
+import 'package:pethouse/features/journal/ui/journal_form_page.dart';
+import 'package:pethouse/features/pets/ui/pet_new_page.dart';
+import 'package:pethouse/features/pets/ui/pet_select_page.dart';
+import 'package:pethouse/features/reminders/ui/reminders_page.dart';
+import 'package:pethouse/features/settings/ui/permissions_page.dart';
+import 'package:pethouse/features/settings/ui/settings_page.dart';
+import 'package:pethouse/features/welcome/ui/welcome_page.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: <RouteBase>[
