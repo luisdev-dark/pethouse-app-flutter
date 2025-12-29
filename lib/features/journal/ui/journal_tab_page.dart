@@ -181,9 +181,24 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: EmptyCard(
-                      title: 'Sin entradas',
-                      subtitle: 'Crea una nueva entrada para tu mascota.',
+                    child: Column(
+                      children: [
+                        EmptyCard(
+                          title: 'Aún no escribes nada',
+                          subtitle: 'Crea la primera entrada para tu mascota.',
+                        ),
+                        SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            SuggestionChip('Hoy caminamos'),
+                            SuggestionChip('Aprendió un truco'),
+                            SuggestionChip('Estuvo raro hoy'),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -317,5 +332,25 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
       return null;
     }
     return JournalFeedFilters(search: _searchQuery);
+  }
+}
+
+class SuggestionChip extends StatelessWidget {
+  final String label;
+  const SuggestionChip(this.label, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      label: Text(label),
+      onPressed: () {
+        context.go(
+          Uri(
+            path: '/journal/new',
+            queryParameters: {'text': label},
+          ).toString(),
+        );
+      },
+    );
   }
 }

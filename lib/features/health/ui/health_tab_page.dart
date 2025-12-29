@@ -7,71 +7,106 @@ import 'package:pethouse/features/reminders/domain/reminder.dart';
 import 'package:pethouse/shared/utils/enums.dart';
 import 'package:pethouse/shared/widgets/common_widgets.dart';
 
-class HealthTabPage extends ConsumerWidget {
+class HealthTabPage extends ConsumerStatefulWidget {
   const HealthTabPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HealthTabPage> createState() => _HealthTabPageState();
+}
+
+class _HealthTabPageState extends ConsumerState<HealthTabPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final petId = ref.watch(selectedPetIdProvider);
     final healthSummaryAsync = ref.watch(healthSummaryProvider(petId));
     final remindersAsync = ref.watch(remindersProvider(petId));
 
-    return DefaultTabController(
-      length: 4,
-      child: Builder(
-        builder: (context) {
-          final tabController = DefaultTabController.of(context);
-
-          return Scaffold(
-            appBar: AppBar(title: const Text('Salud')),
-            body: Column(
-              children: [
-                HealthAlertCard(
-                  healthSummaryAsync: healthSummaryAsync,
-                  remindersAsync: remindersAsync,
-                ),
-                Material(
-                  color: Theme.of(context).colorScheme.surface,
-                  child: const TabBar(
-                    tabs: [
-                      Tab(text: 'Vacunas'),
-                      Tab(text: 'Meds'),
-                      Tab(text: 'Historial'),
-                      Tab(text: 'Peso'),
-                    ],
-                  ),
-                ),
-                const Expanded(
-                  child: TabBarView(
-                    children: [
-                      VaccinesTab(),
-                      MedsTab(),
-                      HistoryTab(),
-                      WeightTab(),
-                    ],
-                  ),
-                ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Salud')),
+      body: Column(
+        children: [
+          HealthAlertCard(
+            healthSummaryAsync: healthSummaryAsync,
+            remindersAsync: remindersAsync,
+          ),
+          Material(
+            color: Theme.of(context).colorScheme.surface,
+            child: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Vacunas'),
+                Tab(text: 'Meds'),
+                Tab(text: 'Historial'),
+                Tab(text: 'Peso'),
               ],
             ),
-            floatingActionButton: AnimatedBuilder(
-              animation: tabController,
-              builder: (context, _) {
-                if (tabController.index != 0) {
-                  return const SizedBox.shrink();
-                }
-                return FloatingActionButton.extended(
-                  onPressed: () {
-                    context.go('/health/vaccine/new');
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Registrar vacuna'),
-                );
-              },
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                VaccinesTab(),
+                MedsTab(),
+                HistoryTab(),
+                WeightTab(),
+              ],
             ),
-          );
-        },
+          ),
+        ],
       ),
+      floatingActionButton: _buildFab(context),
     );
+  }
+
+  Widget? _buildFab(BuildContext context) {
+    switch (_tabController.index) {
+      case 0: // Vaccines
+        return FloatingActionButton.extended(
+          onPressed: () => context.go('/health/vaccine/new'),
+          icon: const Icon(Icons.add),
+          label: const Text('Registrar vacuna'),
+        );
+      case 1: // Meds
+        return FloatingActionButton.extended(
+          onPressed: () => context.go('/health/med/new'),
+          icon: const Icon(Icons.add),
+          label: const Text('Añadir medicación'),
+        );
+      case 2: // History
+        // User request didn't specify a button for history, but we can add a generic one
+        // or leave it empty directly. Let's redirect to symptoms/notes as a generic history entry.
+        return FloatingActionButton.extended(
+          onPressed: () => context.go('/health/symptom/new'),
+          icon: const Icon(Icons.note_add),
+          label: const Text('Agregar registro'),
+        );
+      case 3: // Weight
+        return FloatingActionButton.extended(
+          onPressed: () => context.go('/weight/new'),
+          icon: const Icon(Icons.add),
+          label: const Text('Registrar peso'),
+        );
+      default:
+        return null;
+    }
   }
 }
 
@@ -425,28 +460,106 @@ class WeightTab extends ConsumerWidget {
           );
         }
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemBuilder: (context, index) {
-            final record = weights[index];
-            final date = record.recordedAt;
-            final dateLabel =
-                '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+        // Mini Graph Logic
+        final reversedWeights = weights.reversed.toList();
+        final spots = reversedWeights.map((w) => w.weight).toList();
 
-            return Card(
-              child: ListTile(
-                leading: const Icon(Icons.monitor_weight),
-                title: Text('${record.weight.toStringAsFixed(1)} kg'),
-                subtitle: Text(dateLabel),
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (spots.length > 1)
+              SizedBox(
+                height: 150,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CustomPaint(
+                    painter: _SimpleLineChartPainter(
+                      data: spots,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
               ),
-            );
-          },
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemCount: weights.length,
+
+            if (spots.length > 1) const SizedBox(height: 20),
+
+            ...weights.map((record) {
+              final date = record.recordedAt;
+              final dateLabel =
+                  '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.monitor_weight),
+                  title: Text('${record.weight.toStringAsFixed(1)} kg'),
+                  subtitle: Text(dateLabel),
+                ),
+              );
+            }),
+          ],
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => const Center(child: Text('No se pudo cargar el peso.')),
     );
+  }
+}
+
+class _SimpleLineChartPainter extends CustomPainter {
+  final List<double> data;
+  final Color color;
+
+  _SimpleLineChartPainter({required this.data, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final maxVal = data.reduce((a, b) => a > b ? a : b);
+    final minVal = data.reduce((a, b) => a < b ? a : b);
+    final range = maxVal - minVal;
+
+    // Add some padding to range
+    final effectiveRange = range == 0 ? 1.0 : range;
+    final bottomY = size.height;
+
+    final stepX = size.width / (data.length - 1);
+
+    final path = Path();
+
+    for (int i = 0; i < data.length; i++) {
+      final x = i * stepX;
+      // Normalize y: (val - min) / range -> 0..1. 1 is top, 0 is bottom.
+      // But in canvas y=0 is top. So we want 1 -> topY, 0 -> bottomY.
+      // y = bottomY - (normalized * height)
+      final normalized = (data[i] - minVal) / effectiveRange;
+      final y = bottomY - (normalized * size.height);
+
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+
+      canvas.drawCircle(Offset(x, y), 4, dotPaint);
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
   }
 }

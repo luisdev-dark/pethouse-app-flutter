@@ -180,7 +180,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(4, 3783277932914995685),
     name: 'Pet',
-    lastPropertyId: const obx_int.IdUid(8, 438959370123947486),
+    lastPropertyId: const obx_int.IdUid(11, 1463494861561574531),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -229,6 +229,24 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(8, 438959370123947486),
         name: 'sexValue',
         type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 5788603248316865536),
+        name: 'vetName',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 622165125710723649),
+        name: 'vetPhone',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 1463494861561574531),
+        name: 'vetAddress',
+        type: 9,
         flags: 0,
       ),
     ],
@@ -588,7 +606,16 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final photoPathOffset = object.photoPath == null
             ? null
             : fbb.writeString(object.photoPath!);
-        fbb.startTable(9);
+        final vetNameOffset = object.vetName == null
+            ? null
+            : fbb.writeString(object.vetName!);
+        final vetPhoneOffset = object.vetPhone == null
+            ? null
+            : fbb.writeString(object.vetPhone!);
+        final vetAddressOffset = object.vetAddress == null
+            ? null
+            : fbb.writeString(object.vetAddress!);
+        fbb.startTable(12);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, nameOffset);
         fbb.addOffset(2, speciesOffset);
@@ -597,6 +624,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(5, photoPathOffset);
         fbb.addInt64(6, object.createdAt.millisecondsSinceEpoch);
         fbb.addInt64(7, object.sexValue);
+        fbb.addOffset(8, vetNameOffset);
+        fbb.addOffset(9, vetPhoneOffset);
+        fbb.addOffset(10, vetAddressOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -628,6 +658,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final photoPathParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 14);
+        final vetNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 20);
+        final vetPhoneParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 22);
+        final vetAddressParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 24);
         final createdAtParam = DateTime.fromMillisecondsSinceEpoch(
           const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0),
         );
@@ -638,6 +677,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
           birthDate: birthDateParam,
           sexValue: sexValueParam,
           photoPath: photoPathParam,
+          vetName: vetNameParam,
+          vetPhone: vetPhoneParam,
+          vetAddress: vetAddressParam,
           createdAt: createdAtParam,
         )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
 
@@ -902,6 +944,21 @@ class Pet_ {
   /// See [Pet.sexValue].
   static final sexValue = obx.QueryIntegerProperty<Pet>(
     _entities[3].properties[7],
+  );
+
+  /// See [Pet.vetName].
+  static final vetName = obx.QueryStringProperty<Pet>(
+    _entities[3].properties[8],
+  );
+
+  /// See [Pet.vetPhone].
+  static final vetPhone = obx.QueryStringProperty<Pet>(
+    _entities[3].properties[9],
+  );
+
+  /// See [Pet.vetAddress].
+  static final vetAddress = obx.QueryStringProperty<Pet>(
+    _entities[3].properties[10],
   );
 }
 

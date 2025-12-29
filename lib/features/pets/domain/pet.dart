@@ -19,6 +19,10 @@ class Pet {
   @Property(type: PropertyType.date)
   DateTime createdAt;
 
+  String? vetName;
+  String? vetPhone;
+  String? vetAddress;
+
   Pet({
     required this.name,
     required this.species,
@@ -26,11 +30,13 @@ class Pet {
     this.birthDate,
     this.sexValue,
     this.photoPath,
+    this.vetName,
+    this.vetPhone,
+    this.vetAddress,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  PetSex? get sex =>
-      sexValue == null ? null : PetSex.values[sexValue!];
+  PetSex? get sex => sexValue == null ? null : PetSex.values[sexValue!];
 
   set sex(PetSex? value) => sexValue = value?.index;
 }

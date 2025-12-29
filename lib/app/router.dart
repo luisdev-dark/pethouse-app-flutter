@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:pethouse/app/app_shell.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pethouse/features/health/ui/health_medication_new_page.dart';
+import 'package:pethouse/features/health/ui/health_symptom_new_page.dart';
 import 'package:pethouse/features/health/ui/health_vaccine_new_page.dart';
 import 'package:pethouse/features/health/ui/weight_new_page.dart';
 import 'package:pethouse/features/journal/ui/journal_detail_page.dart';
 import 'package:pethouse/features/journal/ui/journal_form_page.dart';
+import 'package:pethouse/features/pets/ui/pet_edit_page.dart';
 import 'package:pethouse/features/pets/ui/pet_new_page.dart';
 import 'package:pethouse/features/pets/ui/pet_select_page.dart';
 import 'package:pethouse/features/reminders/ui/reminders_page.dart';
@@ -46,9 +48,16 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
+      path: '/pets/edit',
+      builder: (BuildContext context, GoRouterState state) {
+        return const PetEditPage();
+      },
+    ),
+    GoRoute(
       path: '/journal/new',
       builder: (BuildContext context, GoRouterState state) {
-        return const JournalNewPage();
+        final text = state.uri.queryParameters['text'];
+        return JournalNewPage(text: text);
       },
     ),
     GoRoute(
@@ -70,6 +79,12 @@ final GoRouter appRouter = GoRouter(
           );
         }
         return JournalEditPage(entryId: id);
+      },
+    ),
+    GoRoute(
+      path: '/health/symptom/new',
+      builder: (BuildContext context, GoRouterState state) {
+        return const HealthSymptomNewPage();
       },
     ),
     GoRoute(

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:objectbox/objectbox.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pethouse/features/health/data/health_repo.dart';
 import 'package:pethouse/features/health/domain/health_event.dart';
 import 'package:pethouse/features/health/domain/weight_record.dart';
@@ -16,7 +16,34 @@ import 'package:pethouse/features/reminders/data/reminder_repo.dart';
 import 'package:pethouse/features/reminders/domain/reminder.dart';
 import 'package:pethouse/shared/utils/enums.dart';
 
-final selectedPetIdProvider = StateProvider<int?>((ref) => null);
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError();
+});
+
+class SelectedPetIdNotifier extends Notifier<int?> {
+  static const _key = 'selected_pet_id';
+
+  @override
+  int? build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return prefs.getInt(_key);
+  }
+
+  @override
+  set state(int? value) {
+    super.state = value;
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (value == null) {
+      prefs.remove(_key);
+    } else {
+      prefs.setInt(_key, value);
+    }
+  }
+}
+
+final selectedPetIdProvider = NotifierProvider<SelectedPetIdNotifier, int?>(
+  SelectedPetIdNotifier.new,
+);
 
 final objectBoxStoreProvider = Provider<Store>((ref) {
   throw StateError('Store not initialized. Override objectBoxStoreProvider.');
@@ -141,8 +168,10 @@ final journalFeedProvider =
       });
     });
 
-final journalEntryProvider =
-    StreamProvider.family<JournalEntry?, int>((ref, id) {
+final journalEntryProvider = StreamProvider.family<JournalEntry?, int>((
+  ref,
+  id,
+) {
   return ref.watch(journalRepoProvider).watchById(id);
 });
 

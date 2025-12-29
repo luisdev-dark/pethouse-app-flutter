@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pethouse/app/providers.dart';
@@ -106,23 +107,51 @@ class ProfileTabPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 24),
+              if (pet.vetName != null ||
+                  pet.vetPhone != null ||
+                  pet.vetAddress != null) ...[
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Veterinaria',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        if (pet.vetName != null)
+                          ProfileRow(label: 'Nombre', value: pet.vetName!),
+                        if (pet.vetName != null &&
+                            (pet.vetPhone != null || pet.vetAddress != null))
+                          const Divider(),
+                        if (pet.vetPhone != null)
+                          ProfileRow(label: 'Teléfono', value: pet.vetPhone!),
+                        if (pet.vetPhone != null && pet.vetAddress != null)
+                          const Divider(),
+                        if (pet.vetAddress != null)
+                          ProfileRow(
+                            label: 'Dirección',
+                            value: pet.vetAddress!,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
               ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edición próximamente.')),
-                  );
-                },
+                onPressed: () => context.push('/pets/edit'),
                 icon: const Icon(Icons.edit),
                 label: const Text('Editar mascota'),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Exportar resumen próximamente.'),
-                    ),
-                  );
+                  _showExportDialog(context, pet, lastWeight);
                 },
                 icon: const Icon(Icons.share),
                 label: const Text('Exportar resumen'),
@@ -159,6 +188,56 @@ class ProfileTabPage extends ConsumerWidget {
       default:
         return 'Desconocido';
     }
+  }
+
+  void _showExportDialog(BuildContext context, dynamic pet, double? weight) {
+    final weightStr = weight != null
+        ? '${weight.toStringAsFixed(1)} kg'
+        : 'Desconocido';
+    final age = _calculateAge(pet.birthDate);
+    final sex = _sexToString(pet.sex ?? PetSex.unknown);
+
+    final summary =
+        '''
+Resumen de Mascota: ${pet.name}
+-----------------------------
+Especie: ${pet.species}
+Raza: ${pet.breed ?? 'No especificada'}
+Edad: $age
+Sexo: $sex
+Peso: $weightStr
+
+Veterinaria:
+${pet.vetName ?? 'N/A'}
+Tel: ${pet.vetPhone ?? 'N/A'}
+Dir: ${pet.vetAddress ?? 'N/A'}
+''';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Resumen'),
+          content: SingleChildScrollView(child: SelectableText(summary)),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: summary));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Copiado al portapapeles')),
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Copiar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

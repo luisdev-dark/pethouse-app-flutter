@@ -21,6 +21,9 @@ class _PetNewPageState extends ConsumerState<PetNewPage> {
   final _nameController = TextEditingController();
   final _breedController = TextEditingController();
   final _weightController = TextEditingController();
+  final _vetNameController = TextEditingController();
+  final _vetPhoneController = TextEditingController();
+  final _vetAddressController = TextEditingController();
   final _imagePicker = ImagePicker();
 
   String? _species;
@@ -34,6 +37,9 @@ class _PetNewPageState extends ConsumerState<PetNewPage> {
     _nameController.dispose();
     _breedController.dispose();
     _weightController.dispose();
+    _vetNameController.dispose();
+    _vetPhoneController.dispose();
+    _vetAddressController.dispose();
     super.dispose();
   }
 
@@ -81,6 +87,15 @@ class _PetNewPageState extends ConsumerState<PetNewPage> {
       birthDate: _birthDate,
       sexValue: _sex?.index,
       photoPath: _photoPath,
+      vetName: _vetNameController.text.trim().isEmpty
+          ? null
+          : _vetNameController.text.trim(),
+      vetPhone: _vetPhoneController.text.trim().isEmpty
+          ? null
+          : _vetPhoneController.text.trim(),
+      vetAddress: _vetAddressController.text.trim().isEmpty
+          ? null
+          : _vetAddressController.text.trim(),
     );
 
     final petRepo = ref.read(petRepoProvider);
@@ -241,6 +256,37 @@ class _PetNewPageState extends ConsumerState<PetNewPage> {
                     labelText: 'Peso inicial (opcional)',
                     suffixText: 'kg',
                   ),
+                ),
+                const SizedBox(height: 24),
+                ExpansionTile(
+                  title: const Text('Datos Veterinarios (Opcional)'),
+                  children: [
+                    TextFormField(
+                      controller: _vetNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre Veterinaria/Doctor',
+                        prefixIcon: Icon(Icons.local_hospital),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _vetPhoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Teléfono',
+                        prefixIcon: Icon(Icons.phone),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _vetAddressController,
+                      decoration: const InputDecoration(
+                        labelText: 'Dirección',
+                        prefixIcon: Icon(Icons.location_on),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                 ),
               ],
             ),

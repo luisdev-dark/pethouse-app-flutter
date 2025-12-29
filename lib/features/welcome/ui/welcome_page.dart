@@ -20,7 +20,7 @@ class WelcomePage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Organiza salud, diario y recordatorios de tus mascotas.',
+                'Registra la vida de tu mascota',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 24),

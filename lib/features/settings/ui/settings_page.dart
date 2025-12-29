@@ -47,6 +47,31 @@ class _SettingsPageState extends State<SettingsPage> {
           const Divider(),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: SectionTitle(title: 'Rutinas'),
+          ),
+          SwitchListTile(
+            title: const Text('Activar rutinas diarias'),
+            subtitle: const Text('Checklists para paseo, alimentación, etc.'),
+            value: true,
+            onChanged: (val) {
+              //
+            },
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: SectionTitle(title: 'Privacidad'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock),
+            title: const Text('Bloqueo de aplicación'),
+            subtitle: const Text('PIN / Biometría (Próximamente)'),
+            onTap: () {},
+            enabled: false,
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: SectionTitle(title: 'Datos'),
           ),
           ListTile(

@@ -104,6 +104,14 @@ class _AppShellState extends State<AppShell> {
                   context.push('/weight/new');
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.notes),
+                title: const Text('Registrar síntoma/nota'),
+                onTap: () {
+                  context.pop();
+                  context.push('/health/symptom/new');
+                },
+              ),
             ],
           ),
         );

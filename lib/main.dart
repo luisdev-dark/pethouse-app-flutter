@@ -5,13 +5,24 @@ import 'package:pethouse/app/router.dart';
 import 'package:pethouse/app/theme.dart';
 import 'package:pethouse/objectbox.g.dart';
 
+import 'package:pethouse/shared/services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   final store = await openStore();
+  final prefs = await SharedPreferences.getInstance();
+
+  // Initialize notifications early
+  final notifications = NotificationService();
+  await notifications.initialize();
+
   runApp(
     ProviderScope(
       overrides: [
         objectBoxStoreProvider.overrideWithValue(store),
+        sharedPreferencesProvider.overrideWithValue(prefs),
       ],
       child: const PetHouseApp(),
     ),

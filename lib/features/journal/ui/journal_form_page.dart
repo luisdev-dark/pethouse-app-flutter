@@ -10,7 +10,8 @@ import 'package:pethouse/features/journal/domain/media_item.dart';
 import 'package:pethouse/shared/utils/enums.dart';
 
 class JournalNewPage extends JournalEntryFormPage {
-  const JournalNewPage({super.key}) : super(entryId: null);
+  const JournalNewPage({super.key, String? text})
+    : super(entryId: null, initialText: text);
 }
 
 class JournalEditPage extends JournalEntryFormPage {
@@ -19,9 +20,10 @@ class JournalEditPage extends JournalEntryFormPage {
 }
 
 class JournalEntryFormPage extends ConsumerStatefulWidget {
-  const JournalEntryFormPage({super.key, this.entryId});
+  const JournalEntryFormPage({super.key, this.entryId, this.initialText});
 
   final int? entryId;
+  final String? initialText;
 
   @override
   ConsumerState<JournalEntryFormPage> createState() =>
@@ -39,6 +41,14 @@ class _JournalEntryFormPageState extends ConsumerState<JournalEntryFormPage> {
   bool _saving = false;
   bool _initializedFromEntry = false;
   JournalEntry? _editingEntry;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialText != null) {
+      _textController.text = widget.initialText!;
+    }
+  }
 
   static const List<String> _availableMoods = <String>[
     '😄',
@@ -256,24 +266,31 @@ class _JournalEntryFormPageState extends ConsumerState<JournalEntryFormPage> {
   }
 
   Future<void> _pickImage() async {
-    final file = await _imagePicker.pickImage(source: ImageSource.gallery);
-    if (file == null) {
-      return;
-    }
-    final directory = await getApplicationDocumentsDirectory();
-    final separator = Platform.pathSeparator;
-    final extension = file.path.split('.').last;
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final targetPath =
-        '${directory.path}${separator}journal_$timestamp.$extension';
-    final savedFile = await File(file.path).copy(targetPath);
+    try {
+      final file = await _imagePicker.pickImage(source: ImageSource.gallery);
+      if (file == null) {
+        return;
+      }
+      final directory = await getApplicationDocumentsDirectory();
+      final separator = Platform.pathSeparator;
+      final extension = file.path.split('.').last;
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final targetPath =
+          '${directory.path}${separator}journal_$timestamp.$extension';
+      final savedFile = await File(file.path).copy(targetPath);
 
-    if (!mounted) {
-      return;
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _newPhotoPaths.add(savedFile.path);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo acceder a la galería.')),
+      );
     }
-    setState(() {
-      _newPhotoPaths.add(savedFile.path);
-    });
   }
 
   Future<void> _saveEntry(bool isEditing) async {
