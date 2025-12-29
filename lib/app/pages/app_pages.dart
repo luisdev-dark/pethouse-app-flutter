@@ -218,11 +218,7 @@ class HomeTabPage extends ConsumerWidget {
   }
 }
 
-enum _JournalSegment {
-  all,
-  photos,
-  mood,
-}
+enum _JournalSegment { all, photos, mood }
 
 class JournalTabPage extends ConsumerStatefulWidget {
   const JournalTabPage({super.key});
@@ -250,10 +246,7 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
 
     final journalAsync = ref.watch(
       journalFeedProvider(
-        JournalFeedRequest(
-          petId: selectedPetId,
-          filters: _buildFilters(),
-        ),
+        JournalFeedRequest(petId: selectedPetId, filters: _buildFilters()),
       ),
     );
     final mediaAsync = ref.watch(mediaListProvider);
@@ -269,7 +262,7 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
             return Text('Diario · ${pet.name}');
           },
           loading: () => const Text('Diario'),
-          error: (_, __) => const Text('Diario'),
+          error: (_, _) => const Text('Diario'),
         ),
         actions: [
           IconButton(
@@ -420,98 +413,89 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
                 )
               else
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final entry = filteredEntries[index];
-                      final photoPath = firstPhotoPath(entry);
-                      final date = entry.entryAt;
-                      final dateLabel =
-                          '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final entry = filteredEntries[index];
+                    final photoPath = firstPhotoPath(entry);
+                    final date = entry.entryAt;
+                    final dateLabel =
+                        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Card(
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: () => context.go('/journal/${entry.id}'),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (photoPath != null)
-                                  AspectRatio(
-                                    aspectRatio: 16 / 9,
-                                    child: Image.file(
-                                      File(photoPath),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        entry.text,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 4,
-                                        children: [
-                                          if (entry.mood != null &&
-                                              entry.mood!.isNotEmpty)
-                                            Chip(
-                                              label: Text(entry.mood!),
-                                              avatar: const Icon(
-                                                Icons.mood,
-                                                size: 16,
-                                              ),
-                                            ),
-                                          ...entry.tags.map(
-                                            (tag) => Chip(
-                                              label: Text('#$tag'),
-                                            ),
-                                          ),
-                                          Chip(
-                                            avatar: const Icon(
-                                              Icons.event,
-                                              size: 16,
-                                            ),
-                                            label: Text(dateLabel),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Card(
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () => context.go('/journal/${entry.id}'),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (photoPath != null)
+                                AspectRatio(
+                                  aspectRatio: 16 / 9,
+                                  child: Image.file(
+                                    File(photoPath),
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
-                              ],
-                            ),
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      entry.text,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: [
+                                        if (entry.mood != null &&
+                                            entry.mood!.isNotEmpty)
+                                          Chip(
+                                            label: Text(entry.mood!),
+                                            avatar: const Icon(
+                                              Icons.mood,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ...entry.tags.map(
+                                          (tag) => Chip(label: Text('#$tag')),
+                                        ),
+                                        Chip(
+                                          avatar: const Icon(
+                                            Icons.event,
+                                            size: 16,
+                                          ),
+                                          label: Text(dateLabel),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                    childCount: filteredEntries.length,
-                  ),
+                      ),
+                    );
+                  }, childCount: filteredEntries.length),
                 ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 80),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(
-          child: Text('No se pudo cargar el diario.'),
-        ),
+        error: (_, _) =>
+            const Center(child: Text('No se pudo cargar el diario.')),
       ),
     );
   }
@@ -526,9 +510,7 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Texto a buscar...',
-            ),
+            decoration: const InputDecoration(hintText: 'Texto a buscar...'),
           ),
           actions: [
             TextButton(
@@ -548,8 +530,9 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
       return;
     }
     setState(() {
-      _searchQuery =
-          result == null || result.isEmpty ? null : result.toLowerCase();
+      _searchQuery = result == null || result.isEmpty
+          ? null
+          : result.toLowerCase();
     });
   }
 
@@ -557,9 +540,7 @@ class _JournalTabPageState extends ConsumerState<JournalTabPage> {
     if (_searchQuery == null || _searchQuery!.isEmpty) {
       return null;
     }
-    return JournalFeedFilters(
-      search: _searchQuery,
-    );
+    return JournalFeedFilters(search: _searchQuery);
   }
 }
 
@@ -589,13 +570,10 @@ class _HealthTabPageState extends ConsumerState<HealthTabPage> {
       length: 4,
       child: Builder(
         builder: (context) {
-          final TabController? tabController =
-              DefaultTabController.of(context);
+          final tabController = DefaultTabController.of(context);
 
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('Salud'),
-            ),
+            appBar: AppBar(title: const Text('Salud')),
             body: Column(
               children: [
                 _HealthAlertCard(
@@ -625,23 +603,21 @@ class _HealthTabPageState extends ConsumerState<HealthTabPage> {
                 ),
               ],
             ),
-            floatingActionButton: tabController == null
-                ? null
-                : AnimatedBuilder(
-                    animation: tabController,
-                    builder: (context, _) {
-                      if (tabController.index != 0) {
-                        return const SizedBox.shrink();
-                      }
-                      return FloatingActionButton.extended(
-                        onPressed: () {
-                          context.go('/health/vaccine/new');
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text('Registrar vacuna'),
-                      );
-                    },
-                  ),
+            floatingActionButton: AnimatedBuilder(
+              animation: tabController,
+              builder: (context, _) {
+                if (tabController.index != 0) {
+                  return const SizedBox.shrink();
+                }
+                return FloatingActionButton.extended(
+                  onPressed: () {
+                    context.go('/health/vaccine/new');
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Registrar vacuna'),
+                );
+              },
+            ),
           );
         },
       ),
@@ -679,15 +655,12 @@ class _HealthAlertCard extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        final label = diffDays == 0
-            ? 'vence hoy'
-            : 'vence en $diffDays días';
+        final label = diffDays == 0 ? 'vence hoy' : 'vence en $diffDays días';
 
         final hasReminder = remindersAsync.maybeWhen(
           data: (reminders) {
             for (final reminder in reminders) {
-              if (reminder.relatedEventId == next.id &&
-                  reminder.isEnabled) {
+              if (reminder.relatedEventId == next.id && reminder.isEnabled) {
                 return true;
               }
             }
@@ -696,25 +669,21 @@ class _HealthAlertCard extends StatelessWidget {
           orElse: () => false,
         );
 
-        final reminderLabel =
-            hasReminder ? ' (recordatorio activo)' : '';
+        final reminderLabel = hasReminder ? ' (recordatorio activo)' : '';
 
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Card(
-            color: Theme.of(context)
-                .colorScheme
-                .errorContainer
-                .withOpacity(0.1),
+            color: Theme.of(
+              context,
+            ).colorScheme.errorContainer.withValues(alpha: 0.1),
             child: ListTile(
               leading: Icon(
                 Icons.vaccines,
                 color: Theme.of(context).colorScheme.error,
               ),
               title: const Text('Alerta de vacuna'),
-              subtitle: Text(
-                '${next.title} $label$reminderLabel',
-              ),
+              subtitle: Text('${next.title} $label$reminderLabel'),
             ),
           ),
         );
@@ -723,7 +692,7 @@ class _HealthAlertCard extends StatelessWidget {
         padding: EdgeInsets.all(16),
         child: LinearProgressIndicator(),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }
@@ -766,8 +735,7 @@ class _VaccinesTab extends ConsumerWidget {
             String nextLabel = 'Sin próxima fecha';
             String statusLabel = 'OK';
             IconData statusIcon = Icons.check_circle;
-            Color? statusColor =
-                Theme.of(context).colorScheme.primary;
+            Color? statusColor = Theme.of(context).colorScheme.primary;
 
             if (event.nextAt != null) {
               final nextAt = event.nextAt!;
@@ -776,8 +744,7 @@ class _VaccinesTab extends ConsumerWidget {
 
               final now = DateTime.now();
               final todayStart = DateTime(now.year, now.month, now.day);
-              final diffDays =
-                  nextAt.difference(todayStart).inDays;
+              final diffDays = nextAt.difference(todayStart).inDays;
 
               if (diffDays <= 7) {
                 statusLabel = 'Por vencer';
@@ -800,10 +767,7 @@ class _VaccinesTab extends ConsumerWidget {
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      statusIcon,
-                      color: statusColor,
-                    ),
+                    Icon(statusIcon, color: statusColor),
                     const SizedBox(height: 4),
                     Text(
                       statusLabel,
@@ -819,24 +783,20 @@ class _VaccinesTab extends ConsumerWidget {
                         title: Text(event.title),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Aplicada: $appliedLabel'),
                             Text('Próxima: $nextLabel'),
-                            if (event.notes != null &&
-                                event.notes!.isNotEmpty)
+                            if (event.notes != null && event.notes!.isNotEmpty)
                               Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.only(top: 8),
                                 child: Text(event.notes!),
                               ),
                           ],
                         ),
                         actions: [
                           TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).pop(),
+                            onPressed: () => Navigator.of(context).pop(),
                             child: const Text('Cerrar'),
                           ),
                         ],
@@ -847,16 +807,13 @@ class _VaccinesTab extends ConsumerWidget {
               ),
             );
           },
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemCount: vaccines.length,
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
-      error: (_, __) => const Center(
-        child: Text('No se pudo cargar las vacunas.'),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) =>
+          const Center(child: Text('No se pudo cargar las vacunas.')),
     );
   }
 }
@@ -883,8 +840,7 @@ class _MedsTab extends ConsumerWidget {
           return const Center(
             child: _EmptyCard(
               title: 'Sin medicaciones',
-              subtitle:
-                  'Registra medicaciones desde los eventos de salud.',
+              subtitle: 'Registra medicaciones desde los eventos de salud.',
             ),
           );
         }
@@ -905,16 +861,13 @@ class _MedsTab extends ConsumerWidget {
               ),
             );
           },
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemCount: meds.length,
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
-      error: (_, __) => const Center(
-        child: Text('No se pudo cargar las medicaciones.'),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) =>
+          const Center(child: Text('No se pudo cargar las medicaciones.')),
     );
   }
 }
@@ -985,16 +938,13 @@ class _HistoryTab extends ConsumerWidget {
               ),
             );
           },
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemCount: events.length,
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
-      error: (_, __) => const Center(
-        child: Text('No se pudo cargar el historial.'),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) =>
+          const Center(child: Text('No se pudo cargar el historial.')),
     );
   }
 }
@@ -1035,32 +985,196 @@ class _WeightTab extends ConsumerWidget {
             return Card(
               child: ListTile(
                 leading: const Icon(Icons.monitor_weight),
-                title:
-                    Text('${record.weight.toStringAsFixed(1)} kg'),
+                title: Text('${record.weight.toStringAsFixed(1)} kg'),
                 subtitle: Text(dateLabel),
               ),
             );
           },
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemCount: weights.length,
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
-      error: (_, __) => const Center(
-        child: Text('No se pudo cargar el peso.'),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) => const Center(child: Text('No se pudo cargar el peso.')),
     );
   }
 }
 
-class ProfileTabPage extends StatelessWidget {
+class ProfileTabPage extends ConsumerWidget {
   const ProfileTabPage({super.key});
 
   @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final petAsync = ref.watch(selectedPetProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Perfil'),
+        actions: [
+          IconButton(
+            onPressed: () => context.go('/settings'),
+            icon: const Icon(Icons.settings),
+            tooltip: 'Ajustes',
+          ),
+        ],
+      ),
+      body: petAsync.when(
+        data: (pet) {
+          if (pet == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('No hay mascota seleccionada.'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.go('/pets/new'),
+                    child: const Text('Crear nueva mascota'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final wList = ref.watch(weightListProvider(pet.id)).asData?.value;
+          final lastWeight = (wList != null && wList.isNotEmpty)
+              ? wList.first.weight
+              : null;
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Center(
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundImage: pet.photoPath != null
+                      ? FileImage(File(pet.photoPath!))
+                      : null,
+                  child: pet.photoPath == null
+                      ? const Icon(Icons.pets, size: 40)
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  pet.name,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ),
+              if (pet.species.isNotEmpty)
+                Center(
+                  child: Text(
+                    pet.species,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _ProfileRow(
+                        label: 'Raza',
+                        value: pet.breed ?? 'No especificada',
+                      ),
+                      const Divider(),
+                      _ProfileRow(
+                        label: 'Edad',
+                        value: _calculateAge(pet.birthDate),
+                      ),
+                      const Divider(),
+                      _ProfileRow(
+                        label: 'Peso actual',
+                        value: lastWeight != null
+                            ? '${lastWeight.toStringAsFixed(1)} kg'
+                            : '--',
+                      ),
+                      const Divider(),
+                      _ProfileRow(
+                        label: 'Sexo',
+                        value: _sexToString(pet.sex ?? PetSex.unknown),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Edición próximamente.')),
+                  );
+                },
+                icon: const Icon(Icons.edit),
+                label: const Text('Editar mascota'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Exportar resumen próximamente.'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.share),
+                label: const Text('Exportar resumen'),
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => const Center(child: Text('Error al cargar perfil.')),
+      ),
+    );
+  }
+
+  String _calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return 'Desconocida';
+    final now = DateTime.now();
+    final difference = now.difference(birthDate);
+    final days = difference.inDays;
+    if (days < 30) return '$days días';
+    final months = (days / 30).floor();
+    if (months < 12) return '$months meses';
+    final years = (months / 12).floor();
+    final remainingMonths = months % 12;
+    if (remainingMonths > 0) return '$years años, $remainingMonths meses';
+    return '$years años';
+  }
+
+  String _sexToString(PetSex sex) {
+    switch (sex) {
+      case PetSex.male:
+        return 'Macho';
+      case PetSex.female:
+        return 'Hembra';
+      default:
+        return 'Desconocido';
+    }
+  }
+}
+
+class _ProfileRow extends StatelessWidget {
+  const _ProfileRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
   Widget build(BuildContext context) {
-    return const _SimpleScaffold(title: 'Perfil', body: 'Ajustes y cuenta');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(value),
+        ],
+      ),
+    );
   }
 }
 
@@ -1122,14 +1236,67 @@ class WelcomePage extends StatelessWidget {
   }
 }
 
-class PetSelectPage extends StatelessWidget {
+class PetSelectPage extends ConsumerWidget {
   const PetSelectPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _SimpleScaffold(
-      title: 'Seleccionar mascota',
-      body: 'Selector de mascota',
+  Widget build(BuildContext context, WidgetRef ref) {
+    final petsAsync = ref.watch(petsProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mis mascotas')),
+      body: petsAsync.when(
+        data: (pets) {
+          if (pets.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('No tienes mascotas registradas.'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.go('/pets/new'),
+                    child: const Text('Crear mascota'),
+                  ),
+                ],
+              ),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: pets.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final pet = pets[index];
+              return Card(
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: pet.photoPath != null
+                        ? FileImage(File(pet.photoPath!))
+                        : null,
+                    child: pet.photoPath == null
+                        ? const Icon(Icons.pets)
+                        : null,
+                  ),
+                  title: Text(pet.name),
+                  subtitle: Text(pet.species),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    ref.read(selectedPetIdProvider.notifier).state = pet.id;
+                    context.go('/');
+                  },
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => const Center(child: Text('Error al cargar mascotas.')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.go('/pets/new'),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
@@ -1475,8 +1642,7 @@ class _JournalEntryFormPage extends ConsumerStatefulWidget {
       _JournalEntryFormPageState();
 }
 
-class _JournalEntryFormPageState
-    extends ConsumerState<_JournalEntryFormPage> {
+class _JournalEntryFormPageState extends ConsumerState<_JournalEntryFormPage> {
   final TextEditingController _textController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -1584,10 +1750,7 @@ class _JournalEntryFormPageState
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Ánimo',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Ánimo', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -1605,10 +1768,7 @@ class _JournalEntryFormPageState
               }).toList(),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Tags',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Tags', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -1630,10 +1790,7 @@ class _JournalEntryFormPageState
               }).toList(),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Fotos',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Fotos', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -1677,10 +1834,7 @@ class _JournalEntryFormPageState
         final path = allPaths[index];
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.file(
-            File(path),
-            fit: BoxFit.cover,
-          ),
+          child: Image.file(File(path), fit: BoxFit.cover),
         );
       },
     );
@@ -1694,7 +1848,7 @@ class _JournalEntryFormPageState
       lastDate: DateTime(initialDate.year + 1),
       initialDate: initialDate,
     );
-    if (pickedDate == null) {
+    if (pickedDate == null || !mounted) {
       return;
     }
     final pickedTime = await showTimePicker(
@@ -1801,10 +1955,7 @@ class _JournalEntryFormPageState
       if (_newPhotoPaths.isNotEmpty) {
         final mediaItems = _newPhotoPaths
             .map(
-              (path) => MediaItem(
-                typeValue: MediaType.photo.index,
-                path: path,
-              ),
+              (path) => MediaItem(typeValue: MediaType.photo.index, path: path),
             )
             .toList();
         mediaRepo.attachToEntry(entryId, mediaItems);
@@ -1928,10 +2079,7 @@ class JournalDetailPage extends ConsumerWidget {
                     ),
                   ),
                 if (photos.isNotEmpty) const SizedBox(height: 16),
-                Text(
-                  entry.text,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
+                Text(entry.text, style: Theme.of(context).textTheme.bodyLarge),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 8,
@@ -1939,22 +2087,12 @@ class JournalDetailPage extends ConsumerWidget {
                   children: [
                     if (entry.mood != null && entry.mood!.isNotEmpty)
                       Chip(
-                        avatar: const Icon(
-                          Icons.mood,
-                          size: 16,
-                        ),
+                        avatar: const Icon(Icons.mood, size: 16),
                         label: Text(entry.mood!),
                       ),
-                    ...entry.tags.map(
-                      (tag) => Chip(
-                        label: Text('#$tag'),
-                      ),
-                    ),
+                    ...entry.tags.map((tag) => Chip(label: Text('#$tag'))),
                     Chip(
-                      avatar: const Icon(
-                        Icons.event,
-                        size: 16,
-                      ),
+                      avatar: const Icon(Icons.event, size: 16),
                       label: Text(dateLabel),
                     ),
                   ],
@@ -1964,13 +2102,13 @@ class JournalDetailPage extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Scaffold(
-        appBar: AppBar(title: Text('Entrada')),
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Entrada')),
+        body: const Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => const Scaffold(
-        appBar: AppBar(title: Text('Entrada')),
-        body: Center(child: Text('No se pudo cargar la entrada.')),
+      error: (_, _) => Scaffold(
+        appBar: AppBar(title: const Text('Entrada')),
+        body: const Center(child: Text('No se pudo cargar la entrada.')),
       ),
     );
   }
@@ -2013,7 +2151,9 @@ Future<void> _confirmDelete(
   mediaRepo.deleteForEntry(entryId);
   journalRepo.deleteEntry(entryId);
 
-  context.go('/');
+  if (context.mounted) {
+    context.go('/');
+  }
 }
 
 class HealthVaccineNewPage extends ConsumerStatefulWidget {
@@ -2024,11 +2164,9 @@ class HealthVaccineNewPage extends ConsumerStatefulWidget {
       _HealthVaccineNewPageState();
 }
 
-class _HealthVaccineNewPageState
-    extends ConsumerState<HealthVaccineNewPage> {
+class _HealthVaccineNewPageState extends ConsumerState<HealthVaccineNewPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _customNameController =
-      TextEditingController();
+  final TextEditingController _customNameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
   DateTime _appliedAt = DateTime.now();
@@ -2059,17 +2197,12 @@ class _HealthVaccineNewPageState
     if (selectedPetId == null) {
       return const _SimpleScaffold(
         title: 'Nueva vacuna',
-        body:
-            'Selecciona una mascota en Inicio antes de registrar una vacuna.',
+        body: 'Selecciona una mascota en Inicio antes de registrar una vacuna.',
       );
     }
 
-    final vaccineName = _buildVaccineName();
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Registrar vacuna'),
-      ),
+      appBar: AppBar(title: const Text('Registrar vacuna')),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
         child: SizedBox(
@@ -2087,10 +2220,8 @@ class _HealthVaccineNewPageState
             padding: const EdgeInsets.all(16),
             children: [
               DropdownButtonFormField<String>(
-                value: _selectedVaccineName,
-                decoration: const InputDecoration(
-                  labelText: 'Vacuna',
-                ),
+                initialValue: _selectedVaccineName,
+                decoration: const InputDecoration(labelText: 'Vacuna'),
                 items: _vaccineOptions
                     .map(
                       (name) => DropdownMenuItem<String>(
@@ -2339,8 +2470,7 @@ class _HealthVaccineNewPageState
     if (_attachmentPath == null) {
       return base.isEmpty ? null : base;
     }
-    final fileName =
-        _attachmentPath!.split(Platform.pathSeparator).last;
+    final fileName = _attachmentPath!.split(Platform.pathSeparator).last;
     final attachmentNote = 'Adjunto: $fileName ($_attachmentPath)';
     if (base.isEmpty) {
       return attachmentNote;
@@ -2349,35 +2479,355 @@ class _HealthVaccineNewPageState
   }
 }
 
-class HealthMedicationNewPage extends StatelessWidget {
+class HealthMedicationNewPage extends ConsumerStatefulWidget {
   const HealthMedicationNewPage({super.key});
 
   @override
+  ConsumerState<HealthMedicationNewPage> createState() =>
+      _HealthMedicationNewPageState();
+}
+
+class _HealthMedicationNewPageState
+    extends ConsumerState<HealthMedicationNewPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _doseController = TextEditingController();
+  final _notesController = TextEditingController();
+
+  DateTime _nextAt = DateTime.now();
+  bool _createReminder = true;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _doseController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const _SimpleScaffold(
-      title: 'Nuevo medicamento',
-      body: 'Registrar medicamento',
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+
+    if (selectedPetId == null) {
+      return const _SimpleScaffold(
+        title: 'Nuevo medicamento',
+        body: 'Selecciona una mascota en Inicio.',
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Nuevo medicamento')),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.all(16),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _saving ? null : () => _save(selectedPetId),
+            child: Text(_saving ? 'Guardando...' : 'Guardar'),
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del medicamento',
+                ),
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Ingresa el nombre.' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _doseController,
+                decoration: const InputDecoration(
+                  labelText: 'Dosis (opcional)',
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Próxima toma'),
+                subtitle: Text(
+                  '${_nextAt.day}/${_nextAt.month} ${_nextAt.hour}:${_nextAt.minute.toString().padLeft(2, '0')}',
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: _pickNextDate,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _notesController,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Notas'),
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Crear recordatorio'),
+                value: _createReminder,
+                onChanged: (val) => setState(() => _createReminder = val),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  Future<void> _pickNextDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _nextAt,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date == null) return;
+
+    if (!mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_nextAt),
+    );
+    if (time == null) return;
+
+    setState(() {
+      _nextAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
+
+  Future<void> _save(int petId) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+
+    try {
+      final healthRepo = ref.read(healthRepoProvider);
+      final reminderRepo = ref.read(reminderRepoProvider);
+
+      final event = HealthEvent(
+        typeValue: HealthEventType.medication.index,
+        title: _nameController.text.trim(),
+        notes: '${_doseController.text.trim()}\n${_notesController.text.trim()}'
+            .trim(),
+        eventAt: DateTime.now(),
+        nextAt: _nextAt,
+      );
+      event.pet.targetId = petId;
+      final eventId = healthRepo.addVaccine(event); // Using generic add logic
+
+      if (_createReminder) {
+        final reminder = Reminder(
+          typeValue: HealthEventType.medication.index,
+          title: 'Medicación: ${_nameController.text.trim()}',
+          scheduledAt: _nextAt,
+          relatedEventId: eventId,
+        );
+        reminder.pet.targetId = petId;
+        final reminderId = reminderRepo.schedule(reminder);
+
+        final notificationService = NotificationService();
+        await notificationService.initialize();
+        await notificationService.scheduleReminder(
+          id: reminderId,
+          title: 'Medicamento',
+          body: 'Hora de tomar ${_nameController.text.trim()}',
+          scheduledAt: _nextAt,
+        );
+      }
+
+      if (mounted) context.go('/');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }
 
-class WeightNewPage extends StatelessWidget {
+class WeightNewPage extends ConsumerStatefulWidget {
   const WeightNewPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _SimpleScaffold(title: 'Nuevo peso', body: 'Registrar peso');
-  }
+  ConsumerState<WeightNewPage> createState() => _WeightNewPageState();
 }
 
-class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+class _WeightNewPageState extends ConsumerState<WeightNewPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _weightController = TextEditingController();
+  DateTime _date = DateTime.now();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const _SimpleScaffold(
-      title: 'Ajustes',
-      body: 'Preferencias de la app',
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+
+    if (selectedPetId == null) {
+      return const _SimpleScaffold(
+        title: 'Nuevo peso',
+        body: 'Selecciona una mascota en Inicio.',
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Nuevo peso')),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                ListTile(
+                  title: const Text('Fecha'),
+                  subtitle: Text('${_date.day}/${_date.month}/${_date.year}'),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() => _date = picked);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _weightController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Peso (kg)',
+                    suffixText: 'kg',
+                  ),
+                  validator: (v) {
+                    if (v == null || double.tryParse(v) == null) {
+                      return 'Ingresa un peso válido.';
+                    }
+                    return null;
+                  },
+                ),
+                const Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _saving ? null : () => _save(selectedPetId),
+                    child: Text(_saving ? 'Guardando...' : 'Guardar'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save(int petId) async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+
+    final weight = double.parse(_weightController.text);
+    final record = WeightRecord(weight: weight, recordedAt: _date);
+    record.pet.targetId = petId;
+
+    ref.read(healthRepoProvider).addWeightRecord(record);
+
+    if (mounted) {
+      context.go('/health');
+    }
+  }
+}
+
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _notificationsEnabled = true;
+  bool _vaccineNotifs = true;
+  bool _medsNotifs = true;
+  bool _darkMode = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Ajustes')),
+      body: ListView(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: _SectionTitle(title: 'Notificaciones'),
+          ),
+          SwitchListTile(
+            title: const Text('Habilitar notificaciones'),
+            subtitle: const Text('Activar o desactivar todas las alertas'),
+            value: _notificationsEnabled,
+            onChanged: (val) {
+              setState(() => _notificationsEnabled = val);
+            },
+          ),
+          if (_notificationsEnabled) ...[
+            SwitchListTile(
+              title: const Text('Vacunas'),
+              value: _vaccineNotifs,
+              onChanged: (val) => setState(() => _vaccineNotifs = val),
+            ),
+            SwitchListTile(
+              title: const Text('Medicaciones'),
+              value: _medsNotifs,
+              onChanged: (val) => setState(() => _medsNotifs = val),
+            ),
+          ],
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: _SectionTitle(title: 'Datos'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.backup),
+            title: const Text('Copia de seguridad local'),
+            subtitle: const Text('Próximamente'),
+            onTap: () {},
+            enabled: false,
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: _SectionTitle(title: 'Apariencia'),
+          ),
+          SwitchListTile(
+            title: const Text('Modo oscuro'),
+            value: _darkMode,
+            onChanged: (val) {
+              setState(() => _darkMode = val);
+            },
+          ),
+        ],
+      ),
     );
   }
 }

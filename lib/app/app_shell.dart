@@ -22,10 +22,7 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _tabs,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (int index) {
@@ -57,12 +54,57 @@ class _AppShellState extends State<AppShell> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          context.go('/journal/new');
-        },
+        onPressed: () => _showQuickAdd(context),
         icon: const Icon(Icons.add),
-        label: const Text('Nueva entrada'),
+        label: const Text('Acción rápida'),
       ),
+    );
+  }
+
+  void _showQuickAdd(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.book),
+                title: const Text('Entrada de diario'),
+                onTap: () {
+                  context.pop();
+                  context.push('/journal/new');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.vaccines),
+                title: const Text('Registrar vacuna'),
+                onTap: () {
+                  context.pop();
+                  context.push('/health/vaccine/new');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.medication),
+                title: const Text('Registrar medicación'),
+                onTap: () {
+                  context.pop();
+                  context.push('/health/med/new');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.monitor_weight),
+                title: const Text('Registrar peso'),
+                onTap: () {
+                  context.pop();
+                  context.push('/weight/new');
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
